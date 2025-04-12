@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Data Visualization</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <!-- Include Chart.js and Socket.IO client libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+</head>
+<body>
+  <!-- Form for selecting register and mode (live/history) -->
+  <form id="dataForm">
+    <label for="registerSelect">Select Register:</label>
+    <select id="registerSelect" name="register">
+      {% for i in range(REGISTER_COUNT) %}
+        <option value="{{ i }}">Register {{ i }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Radio buttons for mode selection -->
+    <label>
+      <input type="radio" name="mode" value="live" checked> Live Data
+    </label>
+    <label>
+      <input type="radio" name="mode" value="history"> History Data
+    </label>
+
+    <!-- Date input; disabled by default in live mode -->
+    <label for="dateInput">Select Date:</label>
+    <input type="date" id="dateInput" name="date" value="{{ current_date }}" disabled>
+    
+    <button type="submit">Get History Data</button>
+  </form>
+
+  <!-- Canvas where the chart will be rendered -->
+  <canvas id="dataChart" width="800" height="400"></canvas>
+
+  <!-- Link to external JavaScript file -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

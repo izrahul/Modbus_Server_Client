@@ -1,4 +1,4 @@
-from flask import Flask, render_template, g
+from flask import Flask, render_template, g, request, jsonify
 from flask_socketio import SocketIO
 from pymodbus.client import ModbusTcpClient
 from datetime import datetime
@@ -180,14 +180,6 @@ def background_fetch(stop_event):
         fetch_live_data()
         time.sleep(0.5)  # Adjust the sleep time as needed
 
-@app.before_first_request
-def start_data_fetch():
-    """Initialize the background data fetch thread."""
-    stop_event = threading.Event()
-    thread = threading.Thread(target=background_fetch, args=(stop_event,), daemon=True)
-    thread.start()
-    atexit.register(lambda: stop_event.set())  # Ensure the thread stops when the application exits
-
 # --- Routes ---
 @app.route('/')
 def dashboard():
@@ -198,7 +190,86 @@ def dashboard():
 def live_data():
     return render_template('live_data.html')
 
+@app.route('/data_visualization', methods=['GET', 'POST'])
+def data_visualization():
+    current_date = datetime.now().strftime('%Y-%m-%d')
+    return render_template('data_visualization.html', REGISTER_COUNT=REGISTER_COUNT, current_date=current_date)
+
+@app.route('/get_register_data', methods=['GET'])
+def get_register_data():
+    register_index = request.args.get('register', type=int)
+    date_str = request.args.get('date', default=datetime.now().strftime('%Y-%m-%d'))
+
+    if register_index is None:
+        return jsonify({'error': 'Register index is required'}), 400
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Query to fetch data for the specified register and date
+    cursor.execute(f'''
+        SELECT timestamp, register_{register_index}
+        FROM holding_registers
+        WHERE DATE(timestamp) = ?
+        ORDER BY timestamp
+    ''', (date_str,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    if not rows:
+        return jsonify({'error': 'No data found for the specified register and date'}), 404
+
+    # Format the data for JSON response
+    data = {
+        'register': register_index,
+        'date': date_str,
+        'values': [{'timestamp': row[0], 'value': row[1]} for row in rows]
+    }
+
+    return jsonify(data)
+
+@app.route('/get_past_data')
+def get_past_data():
+    date_str = request.args.get('date')
+    register_index = request.args.get('register', default=0, type=int)
+
+    if not date_str:
+        return jsonify({'error': 'No date provided'}), 400
+
+    try:
+        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+    except ValueError:
+        return jsonify({'error': 'Invalid date format'}), 400
+
+    start = datetime.combine(date_obj, datetime.min.time())
+    end = datetime.combine(date_obj, datetime.max.time())
+
+    conn = get_db()
+    cursor = conn.cursor()
+    query = f'''
+        SELECT timestamp, register_{register_index} FROM holding_registers
+        WHERE timestamp BETWEEN ? AND ?
+        ORDER BY timestamp ASC
+    '''
+    cursor.execute(query, (start, end))
+    rows = cursor.fetchall()
+
+    labels = [row['timestamp'] for row in rows]
+    values = [row[f'register_{register_index}'] for row in rows]
+
+    return jsonify({'labels': labels, 'values': values})
+
+
 if __name__ == '__main__':
+    # Initialize database
     initialize_database()
+
+    # Initialize the background data fetch thread.
+    stop_event = threading.Event()
+    thread = threading.Thread(target=background_fetch, args=(stop_event,), daemon=True)
+    thread.start()
+    atexit.register(lambda: stop_event.set())  # Ensure the thread stops when the application exits
+
     eventlet.monkey_patch()
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
