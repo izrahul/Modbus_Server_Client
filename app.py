@@ -191,19 +191,7 @@ def start_data_fetch():
 # --- Routes ---
 @app.route('/')
 def dashboard():
-    holding_registers = fetch_data('holding_registers')
-    coil_status = fetch_data('coil_status')
-    return render_template('dashboard.html', holding_registers=holding_registers, coil_status=coil_status)
-
-@app.route('/holding_registers')
-def holding_registers():
-    data = fetch_data('holding_registers')
-    return render_template('holding_registers.html', data=data)
-
-@app.route('/input_status')
-def input_status():
-    data = fetch_data('coil_status')
-    return render_template('input_status.html', data=data)
+    return render_template('dashboard.html')
 
 # --- Route to Serve the Live Data Page ---
 @app.route('/live_data')
