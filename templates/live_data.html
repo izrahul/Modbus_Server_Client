@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Data</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client/dist/socket.io.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const socket = io.connect(location.origin);
+
+            socket.on('connect', () => {
+                console.log('Connected to server');
+            });
+
+            socket.on('live_data', (data) => {
+                if (data.error) {
+                    document.getElementById('data').innerText = data.error;
+                } else {
+                    // Update timestamp
+                    document.getElementById('timestamp').innerText = `Last updated: ${data.timestamp}`;
+
+                    // Update registers table
+                    let registersHTML = "<h2>Live Holding Registers:</h2><table class='data-table'><thead><tr><th>Label</th><th>Value</th></tr></thead><tbody>";
+                    data.registers.forEach((reg) => {
+                        registersHTML += `<tr><td>${reg.label}</td><td>${reg.value}</td></tr>`;
+                    });
+                    registersHTML += "</tbody></table>";
+
+                    // Update discrete inputs table
+                    let inputsHTML = "<h2>Live Discrete Inputs:</h2><table class='data-table'><thead><tr><th>Label</th><th>Value</th></tr></thead><tbody>";
+                    data.inputs.forEach((input) => {
+                        inputsHTML += `<tr><td>${input.label}</td><td>${input.value}</td></tr>`;
+                    });
+                    inputsHTML += "</tbody></table>";
+
+                    // Combine and update the page
+                    document.getElementById('data').innerHTML = registersHTML + inputsHTML;
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Live Data Updates</h1>
+    <div id="timestamp">Last updated: Loading...</div>
+    <div id="data">Waiting for data...</div>
+</body>
+</html>
