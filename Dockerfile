@@ -1,25 +1,19 @@
 # Use an official Python runtime as a parent image
 FROM python:3.9-slim
 
+# Install git
+RUN apt-get update && apt-get install -y git --no-install-recommends && rm -rf /var/lib/apt/lists/*
+
 # Set the working directory in the container
 WORKDIR /app
 
-RUN apt install git
-RUN git clone https://github.com/santraj611/Modbus_Server_Client.git
-RUN cd Modbus_Server_Client/
+# Clone the repository INTO the current working directory (/app)
+# The '.' at the end is important!
+RUN git clone https://github.com/santraj611/Modbus_Server_Client.git .
 
-# Copy the requirements file into the container at /app
-COPY requirements.txt .
-
-# Install any needed system dependencies (if any, unlikely for this app)
-# RUN apt-get update && apt-get install -y --no-install-recommends some-package && rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies
-# Use --no-cache-dir to reduce image size
+# Install Python dependencies from the requirements file WITHIN the cloned repo
+# This assumes requirements.txt is in the root of the repository
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of your application code into the container at /app
-COPY . .
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
@@ -29,6 +23,6 @@ EXPOSE 5000
 # ENV DATABASE_URL=...
 
 # Command to run the application using Gunicorn with eventlet
-# Replace 'your_app_file' with the name of your python file (without .py)
-# Replace 'app' if your Flask instance variable is named differently
+# Assumes 'app.py' (containing the 'app' instance) is in the root of the cloned repository.
+# Adjust 'app:app' if your file/variable names are different in the repo.
 CMD ["gunicorn", "--worker-class", "eventlet", "--workers", "1", "--bind", "0.0.0.0:5000", "app:app"]
