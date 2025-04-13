@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Listen for live data events from the server.
   socket.on('live_data', function(data) {
+      console.log("Live data:", data);
     if (liveMode) {
       const registerIndex = registerSelect.value;
       // Extract the selected register's value.
