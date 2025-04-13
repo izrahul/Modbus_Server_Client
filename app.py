@@ -380,14 +380,14 @@ if __name__ == '__main__':
     # Monkey patch and run the app
     eventlet.monkey_patch() # Ensure this is called
     logging.info("Starting Flask-SocketIO server...")
-    # socketio.run(app, host='0.0.0.0', port=5020)
+    socketio.run(app, host='0.0.0.0', port=5020, debug=True)
     # IMPORTANT: use_reloader=False is often necessary when using background tasks
     # initiated like this, as the reloader can start the task twice.
 
    # --- Run in Production Mode ---
-    socketio.run(app,
-                 host='0.0.0.0',
-                 port=5000,
-                 debug=False,         # IMPORTANT: Disable debug mode
-                 use_reloader=False   # IMPORTANT: Disable auto-reloader
-                )
+    #socketio.run(app,
+    #             host='0.0.0.0',
+    #             port=5000,
+    #             debug=False,         # IMPORTANT: Disable debug mode
+    #             use_reloader=False   # IMPORTANT: Disable auto-reloader
+    #            )
