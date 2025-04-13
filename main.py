@@ -4,7 +4,7 @@ from pymodbus.client import ModbusTcpClient
 from pymodbus.exceptions import ModbusException, ConnectionException
 
 # --- Configuration (Modify these values) ---
-MODBUS_HOST = '127.0.0.1'  # !!! REPLACE with your Modbus device IP address if not local !!!
+MODBUS_HOST = '192.168.1.39'  # !!! REPLACE with your Modbus device IP address if not local !!!
 MODBUS_PORT = 502
 SLAVE_ID = 1              # The Slave ID of your device
 
@@ -33,10 +33,10 @@ def run_input_debugger():
 
     # Initialize the Modbus TCP client
     client = ModbusTcpClient(
-        MODBUS_HOST,
-        port=MODBUS_PORT,
-        timeout=CONNECTION_TIMEOUT
-    )
+            MODBUS_HOST,
+            port=MODBUS_PORT,
+            timeout=CONNECTION_TIMEOUT
+            )
 
     try:
         # Attempt to connect
@@ -61,10 +61,10 @@ def run_input_debugger():
 
                 # !!! KEY CHANGE: Use read_discrete_inputs for Function Code 02 !!!
                 read_response = client.read_discrete_inputs(
-                    address=INPUT_START_ADDRESS,
-                    count=INPUT_COUNT,
-                    slave=SLAVE_ID
-                )
+                        address=INPUT_START_ADDRESS,
+                        count=INPUT_COUNT,
+                        slave=SLAVE_ID
+                        )
 
                 # --- Analyze the response ---
                 print(f"  Raw Response: {read_response}") # Still crucial for debugging
@@ -74,21 +74,22 @@ def run_input_debugger():
                     print(f"  *** Modbus Error Response Received from Slave! ***")
                     # Check specifically for error related to FC 02 (error code 0x80 + 0x02 = 130)
                     if hasattr(read_response, 'function_code') and read_response.function_code == 130 and \
-                       hasattr(read_response, 'exception_code') and read_response.exception_code == 2:
-                       print("  Interpretation: ILLEGAL DATA ADDRESS (Exception Code 2) for Discrete Inputs")
-                       print("  -> Check INPUT_START_ADDRESS and INPUT_COUNT against device docs for Function Code 02.")
+                            hasattr(read_response, 'exception_code') and read_response.exception_code == 2:
+                                
+                                print("  Interpretation: ILLEGAL DATA ADDRESS (Exception Code 2) for Discrete Inputs")
+                                print("  -> Check INPUT_START_ADDRESS and INPUT_COUNT against device docs for Function Code 02.")
                     # Add checks for other potential exception codes if needed
 
                 elif isinstance(read_response, ModbusException):
-                     # Should be caught by .isError() for ExceptionResponse
+                    # Should be caught by .isError() for ExceptionResponse
                      print(f"  *** Modbus Exception Object Received (unusual): {read_response} ***")
 
                 elif not hasattr(read_response, 'bits'):
                     # If response is not an error but lacks expected data structure
                     print(f"  *** Error: Valid response received, but it has no '.bits' attribute! Unexpected response format. ***")
 
-               else:
-                    # --- Success Case ---
+                else:
+                   # --- Success Case ---
                     received_bits = read_response.bits[:INPUT_COUNT] # Slice to requested count
                     print(f"  Success! Received {len(received_bits)} bits.")
                     # Convert booleans to integers (1/0) and display
