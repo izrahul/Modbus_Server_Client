@@ -16,7 +16,7 @@ socketio = SocketIO(app, async_mode='eventlet')  # Specify async_mode
 
 # --- Configuration ---
 MODBUS_HOST = '127.0.0.1'
-MODBUS_PORT = 5020
+MODBUS_PORT = 502
 SLAVE_ID = 1
 REGISTER_COUNT = 20
 INPUT_COUNT = 20
@@ -229,17 +229,17 @@ def handle_disconnect():
 # --- Routes ---
 @app.route('/')
 def dashboard():
-    return render_template('dashboard.html')
+    return render_template('dashboard.html', year=datetime.now().year)
 
 # --- Route to Serve the Live Data Page ---
 @app.route('/live_data')
 def live_data():
-    return render_template('live_data.html')
+    return render_template('live_data.html', year=datetime.now().year)
 
 @app.route('/data_visualization', methods=['GET', 'POST'])
 def data_visualization():
     current_date = datetime.now().strftime('%Y-%m-%d')
-    return render_template('data_visualization.html', REGISTER_COUNT=REGISTER_COUNT, current_date=current_date)
+    return render_template('data_visualization.html', REGISTER_COUNT=REGISTER_COUNT, current_date=current_date, year=datetime.now().year)
 
 @app.route('/get_register_data', methods=['GET'])
 def get_register_data():
@@ -379,6 +379,6 @@ if __name__ == '__main__':
     # Monkey patch and run the app
     eventlet.monkey_patch() # Ensure this is called
     logging.info("Starting Flask-SocketIO server...")
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
     # IMPORTANT: use_reloader=False is often necessary when using background tasks
     # initiated like this, as the reloader can start the task twice.

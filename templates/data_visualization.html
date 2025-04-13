@@ -3,13 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <title>Data Visualization</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-  <!-- Include Chart.js and Socket.IO client libraries -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js and Socket.IO -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+
+  <style>
+    body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: #f4f7f9;
+  color: #333;
+}
+
+  
+    .navbar {
+      display: flex;
+      justify-content: center;
+      background-color: #2c3e50;
+      padding: 1rem;
+    }
+  
+    .navbar a {
+      color: #ecf0f1;
+      margin: 0 1.5rem;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+  
+    .navbar a:hover {
+      color: #1abc9c;
+    }
+  
+    h1 {
+      text-align: center;
+      margin-top: 2rem;
+      color: #2c3e50;
+    }
+  
+    #dataForm {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      background: #fff;
+      padding: 2rem;
+      margin: 2rem auto;
+      border-radius: 10px;
+      width: 1000%;
+      max-width: 900px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+      gap: 1rem;
+    }
+  
+    #dataForm label {
+      font-weight: 600;
+      flex-basis: 100%;
+    }
+  
+    #dataForm select,
+    #dataForm input[type="date"],
+    #dataForm input[type="time"],
+    #dataForm button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      flex: 1 1 calc(33% - 1rem);
+      min-width: 150px;
+    }
+  
+    #dataForm button {
+      background-color: #1abc9c;
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+  
+    #dataForm button:hover {
+      background-color: #16a085;
+    }
+  
+    canvas {
+  display: block;
+  width: 100vw !important;
+  height: 750px !important;
+  margin: 3rem 0;
+  background: #fff;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  box-shadow: none;
+  padding: 1rem 0;
+}
+
+footer {
+    text-align: center;
+    padding: 1rem;
+    background-color: #ecf0f1;
+    color: #7f8c8d;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+
+@media (max-width: 600px) {
+    .navbar {
+        flex-direction: column;
+    }
+    .navbar a {
+        margin: 0.5rem 0;
+    }
+}
+  
+    @media (max-width: 768px) {
+      #dataForm {
+        flex-direction: column;
+      }
+  
+      #dataForm select,
+      #dataForm input,
+      #dataForm button {
+        flex: 1 1 100%;
+      }
+  
+      canvas {
+        width: 100% !important;
+      }
+    }
+  </style>
+  
+  
 </head>
 <body>
-  <!-- Form for selecting register and mode (live/history) -->
+
+  <!-- Navigation -->
+  <div class="navbar">
+    <a href="/">Dashboard</a>
+    <a href="/live_data">Live Data</a>
+    <a href="/data_visualization">Plot Data</a>
+  </div>
+
+  <h1>📈 Data Visualization</h1>
+
+  <!-- Form -->
   <form id="dataForm">
     <label for="registerSelect">Select Register:</label>
     <select id="registerSelect" name="register">
@@ -18,7 +161,6 @@
       {% endfor %}
     </select>
 
-    <!-- Radio buttons for mode selection -->
     <label>
       <input type="radio" name="mode" value="live" checked> Live Data
     </label>
@@ -26,24 +168,25 @@
       <input type="radio" name="mode" value="history"> History Data
     </label>
 
-    <!-- Date input (existing) -->
     <label for="dateInput">Select Date:</label>
     <input type="date" id="dateInput" name="date" value="{{ current_date }}" disabled>
 
-    <!-- NEW: Time Inputs -->
     <label for="timeFromInput">From Time:</label>
-    <input type="time" id="timeFromInput" name="time_from" value="00:00" disabled> <!-- Default to start of day -->
+    <input type="time" id="timeFromInput" name="time_from" value="00:00" disabled>
 
     <label for="timeToInput">To Time:</label>
-    <input type="time" id="timeToInput" name="time_to" value="23:59" disabled> <!-- Default to end of day -->
+    <input type="time" id="timeToInput" name="time_to" value="23:59" disabled>
 
     <button type="submit">Get History Data</button>
   </form>
 
-  <!-- Canvas where the chart will be rendered -->
+  <!-- Chart -->
   <canvas id="dataChart" width="800" height="400"></canvas>
-
-  <!-- Link to external JavaScript file -->
+  <footer>
+    &copy; {{ year or 2025 }} Modbus Dashboard. Built with ❤️ for industrial data.
+  </footer>
+  <!-- Main JavaScript -->
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
 </body>
 </html>
