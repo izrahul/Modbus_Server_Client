@@ -173,6 +173,8 @@ def fetch_live_data():
     finally:
         client.close()
 
+    return data
+
 # Start the background thread to fetch data
 def background_fetch(stop_event):
     """Background task to fetch live data at regular intervals."""

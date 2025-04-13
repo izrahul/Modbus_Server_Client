@@ -46,8 +46,7 @@ def live_data_broadcaster():
         # You should call your existing fetch_live_data logic here,
         # and broadcast the result manually.
         try:
-            from your_flask_app import get_current_modbus_data  # Refactor to separate logic
-            data = get_current_modbus_data()  # Should return dictionary like {'timestamp': ..., 'registers': ..., 'inputs': ...}
+            data = fetch_live_data()  # Should return dictionary like {'timestamp': ..., 'registers': ..., 'inputs': ...}
             if data:
                 broadcast(data)
         except Exception as e:
