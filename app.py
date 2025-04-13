@@ -277,32 +277,94 @@ def get_register_data():
 
 @app.route('/get_past_data')
 def get_past_data():
-    date_str = request.args.get('date')
+    # Get parameters from query string
     register_index = request.args.get('register', default=0, type=int)
+    start_str = request.args.get('start') # Expecting YYYY-MM-DDTHH:MM:SS
+    end_str = request.args.get('end')     # Expecting YYYY-MM-DDTHH:MM:SS
 
-    if not date_str:
-        return jsonify({'error': 'No date provided'}), 400
+    # --- Validation ---
+    logging.info(f"--- Processing /get_past_data ---") # Log entry point
+    logging.info(f"Received raw start string: '{start_str}' (type: {type(start_str)})")
+    logging.info(f"Received raw end string: '{end_str}' (type: {type(end_str)})")
+
+    if start_str is None or end_str is None:
+        logging.warning("Validation Failed: Missing start or end parameter.") # Add log
+        return jsonify({'error': 'Start and end parameters are required (YYYY-MM-DDTHH:MM:SS)'}), 400
 
     try:
-        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-    except ValueError:
-        return jsonify({'error': 'Invalid date format'}), 400
+        logging.info(f"Attempting datetime.fromisoformat('{start_str}')...")
+        start_dt = datetime.fromisoformat(start_str)
+        logging.info(f"Successfully parsed start_dt: {start_dt}")
 
-    start = datetime.combine(date_obj, datetime.min.time())
-    end = datetime.combine(date_obj, datetime.max.time())
+        logging.info(f"Attempting datetime.fromisoformat('{end_str}')...")
+        end_dt = datetime.fromisoformat(end_str)
+        logging.info(f"Successfully parsed end_dt: {end_dt}")
 
+    except ValueError as e:
+        # Log the specific exception along with the warning
+        logging.warning(f"Validation Failed: Invalid datetime format received. Start: '{start_str}', End: '{end_str}'. Error: {e}")
+        # Include the specific error in the response JSON for better debugging
+        return jsonify({'error': f'Invalid start or end datetime format. Use YYYY-MM-DDTHH:MM:SS. Parser Error: {e}'}), 400
+
+    if end_dt < start_dt:
+         logging.warning(f"Validation Failed: End datetime ({end_dt}) is before start datetime ({start_dt}).") # Add log
+         return jsonify({'error': 'End datetime cannot be before start datetime'}), 400
+
+    logging.info(f"Fetching past data for register {register_index} between {start_dt} and {end_dt}")
+    # ... rest of the database query and response formatting ...
+
+    # --- Database Query ---
     conn = get_db()
     cursor = conn.cursor()
-    query = f'''
-        SELECT timestamp, register_{register_index} FROM holding_registers
-        WHERE timestamp BETWEEN ? AND ?
-        ORDER BY timestamp ASC
-    '''
-    cursor.execute(query, (start, end))
-    rows = cursor.fetchall()
+    try:
+        # Use BETWEEN with the full datetime objects
+        query = f'''
+            SELECT timestamp, register_{register_index} FROM holding_registers
+            WHERE timestamp BETWEEN ? AND ?
+            ORDER BY timestamp ASC
+        '''
+        cursor.execute(query, (start_dt, end_dt)) # Pass datetime objects directly
+        rows = cursor.fetchall()
+    except sqlite3.OperationalError as e:
+        conn.close()
+        logging.error(f"Error fetching past data: {e}")
+        return jsonify({'error': f'Error accessing data for register {register_index}. Does the column exist?'}), 500
+    except Exception as e:
+        conn.close()
+        logging.error(f"Unexpected error fetching past data: {e}")
+        return jsonify({'error': 'An unexpected error occurred while fetching data.'}), 500
 
-    labels = [row['timestamp'] for row in rows]
-    values = [row[f'register_{register_index}'] for row in rows]
+    conn.close() # Close connection after fetch
+
+    # --- Format Response ---
+    # Convert timestamp back to string for JSON (e.g., ISO format)
+    # Assuming timestamps in DB are stored in a format SQLite understands (TEXT as ISO8601 or REAL/INTEGER)
+    # If they are TEXT, they might already be suitable. If not, parse and format.
+    labels = []
+    values = []
+    register_col_name = f'register_{register_index}'
+
+    for row in rows:
+        # Assuming row['timestamp'] is a string from DB, like 'YYYY-MM-DD HH:MM:SS'
+        # Let's format it consistently for the chart label (e.g., HH:MM:SS or YYYY-MM-DD HH:MM:SS)
+        try:
+            # Try parsing if needed, otherwise use as is
+            ts_obj = datetime.fromisoformat(row['timestamp']) # If stored as ISO TEXT
+            # ts_obj = datetime.strptime(row['timestamp'], '%Y-%m-%d %H:%M:%S') # If stored in this TEXT format
+            # Format for display
+            formatted_ts = ts_obj.strftime('%Y-%m-%d %H:%M:%S') # Or just '%H:%M:%S' if date is known
+            labels.append(formatted_ts)
+            values.append(row[register_col_name])
+        except (TypeError, ValueError) as e:
+             logging.warning(f"Could not parse timestamp '{row['timestamp']}' from DB: {e}. Skipping row.")
+             continue # Skip rows with bad timestamps
+
+
+    # Check if any data was actually found in the interval
+    if not values:
+         logging.info(f"No data found for register {register_index} in the specified interval.")
+         # Return empty lists instead of 404 maybe? Or keep 404? User preference.
+         # return jsonify({'error': 'No data found for the specified register and time interval'}), 404
 
     return jsonify({'labels': labels, 'values': values})
 

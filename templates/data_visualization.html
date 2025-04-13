@@ -26,10 +26,17 @@
       <input type="radio" name="mode" value="history"> History Data
     </label>
 
-    <!-- Date input; disabled by default in live mode -->
+    <!-- Date input (existing) -->
     <label for="dateInput">Select Date:</label>
     <input type="date" id="dateInput" name="date" value="{{ current_date }}" disabled>
-    
+
+    <!-- NEW: Time Inputs -->
+    <label for="timeFromInput">From Time:</label>
+    <input type="time" id="timeFromInput" name="time_from" value="00:00" disabled> <!-- Default to start of day -->
+
+    <label for="timeToInput">To Time:</label>
+    <input type="time" id="timeToInput" name="time_to" value="23:59" disabled> <!-- Default to end of day -->
+
     <button type="submit">Get History Data</button>
   </form>
 

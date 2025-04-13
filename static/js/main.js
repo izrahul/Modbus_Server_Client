@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateInput = document.getElementById('dateInput');
     const modeRadios = document.getElementsByName('mode');
     const ctx = document.getElementById('dataChart').getContext('2d');
+    const timeFromInput = document.getElementById('timeFromInput'); // Get new element
+    const timeToInput = document.getElementById('timeToInput');   // Get new element
 
     // Create a Chart.js instance.
     let dataChart = new Chart(ctx, {
@@ -92,21 +94,29 @@ document.addEventListener('DOMContentLoaded', function() {
         // Do NOT add any title update code here to avoid the previous error
     });
 
-// --- End of Section to Add ---
     // Enable/disable date input based on mode selection.
-    modeRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.value === 'history') {
-                dateInput.disabled = false;
-                liveMode = false;
-            } else {
-                dateInput.disabled = true;
-                liveMode = true;
-                // Clear chart when switching to live mode.
-                    clearChart();
-            }
+        modeRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                // ... (get selectedRegister) ...
+                    if (this.value === 'history') {
+                        console.log("Switched to History mode.");
+                        dateInput.disabled = false;
+                        timeFromInput.disabled = false; // Enable time inputs
+                        timeToInput.disabled = false;   // Enable time inputs
+                        liveMode = false;
+                        clearChart();
+                        // ... (optional title update) ...
+                    } else { // Switching TO live mode
+                        console.log("Switched to Live mode.");
+                        dateInput.disabled = true;
+                        timeFromInput.disabled = true; // Disable time inputs
+                        timeToInput.disabled = true;   // Disable time inputs
+                        liveMode = true;
+                        clearChart();
+                        // ... (optional title update) ...
+                    }
+            });
         });
-    });
 
     // Function to clear chart data.
     function clearChart() {
@@ -123,25 +133,102 @@ document.addEventListener('DOMContentLoaded', function() {
         if (mode === 'history') {
             const registerIndex = registerSelect.value;
             const date = dateInput.value;
-            // Fetch historical data from the Flask endpoint.
-                fetch(`/get_past_data?register=${registerIndex}&date=${date}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert(data.error);
-                        return;
+            const timeFrom = timeFromInput.value;
+            const timeTo = timeToInput.value;
+
+            // --- Validation (Basic) ---
+            if (!date) {
+                alert("Please select a date.");
+                return;
+            }
+            if (!timeFrom) {
+                alert("Please select a 'From' time.");
+                return;
+            }
+            if (!timeTo) {
+                alert("Please select a 'To' time.");
+                return;
+            }
+
+            // Combine date and time into ISO-like strings (YYYY-MM-DDTHH:MM:SS)
+            // The backend will parse these. Sending seconds is good practice.
+            const startDateTimeStr = `${date}T${timeFrom}:00`;
+            const endDateTimeStr = `${date}T${timeTo}:00`;
+
+            // Simple check: From time should not be after To time on the same day
+            if (timeFrom > timeTo) {
+                alert("'From' time cannot be after 'To' time.");
+                return;
+            }
+
+
+            console.log(`Workspaceing history for Register ${registerIndex} from ${startDateTimeStr} to ${endDateTimeStr}`);
+            clearChart();
+            // ... (optional loading title update) ...
+
+                // Construct fetch URL with start and end parameters
+            const fetchUrl = `/get_past_data?register=${registerIndex}&start=${startDateTimeStr}&end=${endDateTimeStr}`;
+            console.log("Fetch URL:", fetchUrl); // Log the URL being fetched
+
+            fetch(fetchUrl)
+                .then(response => {
+                    // Step 1: Check if the response status is OK (e.g., 200)
+                    if (!response.ok) {
+                        // If not OK, try to parse error JSON sent by Flask
+                        // response.json() returns a promise, so we chain another .then/.catch
+                        return response.json().then(errorData => {
+                            // Throw an error using the server's message if available
+                            throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+                        }).catch(jsonError => {
+                            // If parsing the error JSON fails (e.g., server sent HTML), throw generic HTTP error
+                            throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
+                        });
                     }
-                    // Update the chart with the fetched historical data.
+                    // Step 2: If response IS ok, parse the JSON body (this also returns a promise)
+                    return response.json();
+                })
+                .then(data => {
+                    // Step 3: This block only runs if response was OK and JSON parsing succeeded
+                    // Log the ACTUAL data received from the server
+                    console.log("Successfully received and parsed history data:", data);
+
+                    // Step 4: Check if the server actually found data for the interval
+                    if (data.labels && data.labels.length > 0) {
+                        console.log(`Updating chart with ${data.labels.length} data points.`);
+                        // Update the chart with the received historical data
                         dataChart.data.labels = data.labels;
-                    dataChart.data.datasets[0].data = data.values;
-                    dataChart.data.datasets[0].label = `Register ${registerIndex} Data (${date})`;
-                    dataChart.update();
+                        dataChart.data.datasets[0].data = data.values;
+                        // You could add a final title update here if desired
+                        // dataChart.options.plugins.title.text = `History for Register ${registerIndex} (${date} ${timeFrom}-${timeTo})`;
+                        dataChart.update();
+                    } else {
+                        // Server responded successfully but found no data in the interval
+                        console.log("No data points found for the selected interval. Chart remains empty.");
+                        // Optionally display a message to the user on the page or via alert
+                        alert("No data found for the selected date and time interval.");
+                        // The chart should already be empty because clearChart() was called before fetch
+                    }
                 })
                 .catch(error => {
-                    console.error('Error fetching historical data:', error);
+                    // Step 5: Catches network errors OR errors thrown from the first .then() block
+                    console.error('Error fetching or processing historical data:', error);
+                    alert(`Error: ${error.message}`); // Display the specific error message
+                    // You could update the chart title to show an error here if desired
+                    // dataChart.options.plugins.title.text = `Error loading data`;
+                    // dataChart.update();
                 });
-        }
-    });
+        }});
+
+    // Ensure initial state matches HTML defaults (date/time disabled if live is default)
+    if (liveMode) {
+        dateInput.disabled = true;
+        timeFromInput.disabled = true;
+        timeToInput.disabled = true;
+    } else {
+        dateInput.disabled = false;
+        timeFromInput.disabled = false;
+        timeToInput.disabled = false;
+    }
 
     // On page load, if live mode is active, the chart will update via SocketIO events.
 });
