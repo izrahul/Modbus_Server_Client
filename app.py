@@ -72,9 +72,9 @@ def initialize_database():
 
         conn.commit()
 
-def insert_data_into_database(registers, inputs):
+def insert_data_into_database(app_context, registers, inputs):
     """Insert data into the database."""
-    with app.app_context():  # Ensure we're in an application context
+    with app_context:# Ensure we're in an application context
         conn = get_db()
         cursor = conn.cursor()
 

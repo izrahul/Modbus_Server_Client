@@ -79,6 +79,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // --- Add This Section: Listen for changes on the register dropdown ---
+    registerSelect.addEventListener('change', function() {
+        const selectedRegister = this.value;
+        console.log(`Register selection changed to index: ${selectedRegister}`); // Log for debugging
+
+        // Check the 'liveMode' variable (which should be correctly updated by your radio buttons)
+        if (liveMode) {
+            console.log("Clearing chart because register changed while in live mode.");
+            clearChart(); // Call the existing function to clear chart data and update
+        }
+        // Do NOT add any title update code here to avoid the previous error
+    });
+
+// --- End of Section to Add ---
     // Enable/disable date input based on mode selection.
     modeRadios.forEach(radio => {
         radio.addEventListener('change', function() {
@@ -99,6 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
         dataChart.data.labels = [];
         dataChart.data.datasets[0].data = [];
         dataChart.update();
+        console.log("Chart data cleared."); // Optional log
     }
 
     // Event listener for form submission (used for history mode).
