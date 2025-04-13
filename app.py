@@ -8,6 +8,7 @@ import threading
 import eventlet
 # import atexit
 import logging
+import os
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -15,12 +16,12 @@ app = Flask(__name__)
 socketio = SocketIO(app, async_mode='eventlet')  # Specify async_mode
 
 # --- Configuration ---
-MODBUS_HOST = '127.0.0.1'
-MODBUS_PORT = 502
-SLAVE_ID = 1
-REGISTER_COUNT = 20
-INPUT_COUNT = 20
-DATABASE = 'modbus_data.db'
+MODBUS_HOST = os.getenv('MODBUS_HOST', 'host.docker.internal')
+MODBUS_PORT = int(os.getenv('MODBUS_PORT', 502))
+DATABASE = os.getenv('DATABASE', '/app/modbus_data.db')
+SLAVE_ID = int(os.getenv('SLAVE_ID', 1))
+REGISTER_COUNT = int(os.getenv('REGISTER_COUNT', 20))
+INPUT_COUNT = int(os.getenv('INPUT_COUNT', 20))
 
 # --- Database Initialization ---
 def connect_db():
