@@ -17,7 +17,7 @@ socketio = SocketIO(app, async_mode='eventlet')  # Specify async_mode
 
 # --- Configuration ---
 MODBUS_HOST = os.getenv('MODBUS_HOST', 'host.docker.internal')
-MODBUS_PORT = int(os.getenv('MODBUS_PORT', 502))
+MODBUS_PORT = int(os.getenv('MODBUS_PORT', 5020))
 DATABASE = os.getenv('DATABASE', '/app/modbus_data.db')
 SLAVE_ID = int(os.getenv('SLAVE_ID', 1))
 REGISTER_COUNT = int(os.getenv('REGISTER_COUNT', 20))

@@ -41,4 +41,4 @@ update_thread.start()
 
 # Start the TCP server on all interfaces at port 5020 (you can choose another port if needed)
 print("Starting Modbus Slave Simulator on port 5020...")
-StartTcpServer(context, address=("127.0.0.1", 5020))
+StartTcpServer(context, address=("0.0.0.0", 5020))
