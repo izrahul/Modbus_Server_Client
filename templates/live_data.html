@@ -43,8 +43,18 @@
     </script>
 </head>
 <body>
-    <h1>Live Data Updates</h1>
-    <div id="timestamp">Last updated: Loading...</div>
-    <div id="data">Waiting for data...</div>
+    <div class="navbar">
+        <a href="/">Dashboard</a>
+        <a href="/live_data">Live Data</a>
+        <a href="/data_visualization">Ploat Data</a>
+    </div>
+    <div class="content">
+        <h1>Live Data Updates</h1>
+        <div id="timestamp">Last updated: Loading...</div>
+        <div id="data">Waiting for data...</div>
+    </div>
+    <footer>
+        &copy; {{ year or 2025 }} Modbus Dashboard. Built with ❤️ for industrial data.
+    </footer>
 </body>
 </html>

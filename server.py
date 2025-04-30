@@ -1,28 +1,57 @@
+# tcp_modbus_server.py
 import socket
+import threading
+import json
+from time import sleep
+from app import fetch_live_data  # Replace with actual import path
 
-# Create a TCP socket
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+TCP_HOST = '0.0.0.0'  # Listen on all interfaces
+TCP_PORT = 5002
+clients = []
 
-# Bind the socket to an address and port
-server_socket.bind(('0.0.0.0', 9999))
+def broadcast(data):
+    for client in clients[:]:
+        try:
+            client.sendall((json.dumps(data) + '\n').encode())
+        except Exception as e:
+            print(f"Error sending to client: {e}")
+            clients.remove(client)
 
-# Listen for incoming connections
-server_socket.listen(5)
+def client_handler(conn, addr):
+    print(f"New client connected: {addr}")
+    clients.append(conn)
+    try:
+        while True:
+            sleep(10)  # Keep alive (optional)
+    except:
+        pass
+    finally:
+        clients.remove(conn)
+        conn.close()
 
-print("Server is listening...")
+def start_server():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((TCP_HOST, TCP_PORT))
+    server.listen()
+    print(f"TCP Server listening on {TCP_PORT}")
+    
+    threading.Thread(target=live_data_broadcaster, daemon=True).start()
 
-while True:
-    # Accept a connection
-    client_socket, address = server_socket.accept()
-    print(f"Connection from {address} has been established!")
+    while True:
+        conn, addr = server.accept()
+        threading.Thread(target=client_handler, args=(conn, addr), daemon=True).start()
 
-    # Receive a message from the client
-    message = client_socket.recv(1024).decode()
-    print(f"Received from client: {message}")
+def live_data_broadcaster():
+    while True:
+        # You should call your existing fetch_live_data logic here,
+        # and broadcast the result manually.
+        try:
+            data = fetch_live_data()  # Should return dictionary like {'timestamp': ..., 'registers': ..., 'inputs': ...}
+            if data:
+                broadcast(data)
+        except Exception as e:
+            print(f"Error fetching or broadcasting data: {e}")
+        sleep(1)
 
-    # Send a response back to the client
-    response = "Hello from Ajay"
-    client_socket.send(response.encode())
-
-    # Close the client socket
-    client_socket.close()
+if __name__ == '__main__':
+    start_server()

@@ -5,15 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modbus Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            background: #f4f7f9;
+            color: #333;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: center;
+            background-color: #2c3e50;
+            padding: 1rem;
+        }
+
+        .navbar a {
+            color: #ecf0f1;
+            margin: 0 1.5rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .navbar a:hover {
+            color: #1abc9c;
+        }
+
+        .content {
+            text-align: center;
+            padding: 5rem 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        p {
+            font-size: 1.2rem;
+            color: #555;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .button-container {
+            margin-top: 2rem;
+        }
+
+        .dashboard-button {
+            background-color: #1abc9c;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 5px;
+            text-decoration: none;
+            margin: 0.5rem;
+            display: inline-block;
+            transition: background 0.3s ease;
+        }
+
+        .dashboard-button:hover {
+            background-color: #16a085;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: #ecf0f1;
+            color: #7f8c8d;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+
+        @media (max-width: 600px) {
+            .navbar {
+                flex-direction: column;
+            }
+            .navbar a {
+                margin: 0.5rem 0;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="navbar">
         <a href="/">Dashboard</a>
         <a href="/live_data">Live Data</a>
+        <a href="/data_visualization">Plot Data</a>
     </div>
+
     <div class="content">
-        <h1>Modbus Dashboard</h1>
-        <p>Welcome to the Modbus Dashboard. Use the navigation bar to access different pages.</p>
+        <h1>🔧 Modbus Dashboard</h1>
+        <p>Monitor and analyze your Modbus device data in real-time or via historical reports.</p>
+
+        <div class="button-container">
+            <a class="dashboard-button" href="/live_data">View Live Data</a>
+            <a class="dashboard-button" href="/data_visualization">Plot History</a>
+        </div>
     </div>
+
+    <footer>
+        &copy; {{ year or 2025 }} Modbus Dashboard. Built with ❤️ for industrial data.
+    </footer>
 </body>
 </html>

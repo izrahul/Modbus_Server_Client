@@ -1,17 +1,16 @@
+# tcp_client.py
 import socket
 
-# Create a TCP socket
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+SERVER_IP = '192.168.1.39'  # Replace with server's local IP
+SERVER_PORT = 5002
 
-# Connect to the server
-client_socket.connect(('localhost', 9999))
-
-# Send a message to the server
-client_socket.send("Hello From Rahul".encode())
-
-# Receive a response from the server
-response = client_socket.recv(1024).decode()
-print(f"Received from server: {response}")
-
-# Close the client socket
-client_socket.close()
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.connect((SERVER_IP, SERVER_PORT))
+    print("Connected to server.")
+    buffer = ''
+    while True:
+        data = s.recv(1024).decode()
+        buffer += data
+        while '\n' in buffer:
+            line, buffer = buffer.split('\n', 1)
+            print("Live Data:", line)
